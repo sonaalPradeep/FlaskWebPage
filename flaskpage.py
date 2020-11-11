@@ -15,6 +15,7 @@ class WebStatus():
 	LOGIN_STATUS = None
 	POSTS = None
 	GUEST_USRNAME = None
+	ATTRIBUTES_SET = []
 
 status = WebStatus()
 
@@ -26,7 +27,7 @@ def offline():
 @app.route("/home", methods=['GET'])
 def home():
 	if status.LOGIN_STATUS == True:
-		return render_template('home.html')
+		return render_template('home.html', attributes = status.ATTRIBUTES_SET)
 	else:
 		return redirect(url_for('offline'))
 	
@@ -48,7 +49,7 @@ def home2():
 	r=r.json()
 
 	status.POSTS = []
-	tmp_download_imgs = glob.glob('./static/tmp_uploads/*')
+	tmp_download_imgs = glob.glob('./tmp_uploads/*')
 	if tmp_download_imgs != []:
 		for img_loc in tmp_download_imgs:
 			os.remove(img_loc)
@@ -84,7 +85,7 @@ def home2():
 				t.write(te)
 
 
-	return render_template('home.html', posts = status.POSTS)
+	return render_template('home.html', posts = status.POSTS, attributes = status.ATTRIBUTES_SET)
 
 
 @app.route("/about")
@@ -126,9 +127,13 @@ def upload():
 							value=myimage.get(attr)
 							if value!=None or value!=null or (type(value) not in [float,int,str]):
 								payload['metadata'][attr]=myimage.get(attr)
+
+								if attr not in status.ATTRIBUTES_SET and attr[0] != "_" or attr in ['user_comment', "MakerNote"]:
+									status.ATTRIBUTES_SET.append(attr)
+
 						except:
 							continue
-					
+
 					r=requests.post("http://localhost:5000/create_record",json=payload)
 	return redirect(url_for('home'))
 
@@ -136,7 +141,7 @@ def upload():
 def upload2():
 	if status.LOGIN_STATUS == False:
 		return redirect(url_for('offline'))
-	return render_template('upload.html', title = "Submit")
+	return render_template('upload.html', title = "Submit", attributes = status.ATTRIBUTES_SET)
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
