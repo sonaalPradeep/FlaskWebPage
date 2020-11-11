@@ -1,11 +1,15 @@
 from flask import Flask, render_template, url_for, flash, redirect, request, jsonify
+from forms import LoginForm
+
 import requests
 import base64
-from forms import LoginForm
+
 from exif import Image
+
 import json
 import glob
 import os
+import random
 
 app = Flask(__name__)
 
@@ -27,7 +31,8 @@ def offline():
 @app.route("/home", methods=['GET'])
 def home():
 	if status.LOGIN_STATUS == True:
-		return render_template('home.html', attributes = status.ATTRIBUTES_SET)
+		random.shuffle(status.ATTRIBUTES_SET)
+		return render_template('home.html', attributes = status.ATTRIBUTES_SET[:10])
 	else:
 		return redirect(url_for('offline'))
 	
@@ -84,8 +89,8 @@ def home2():
 				te=base64.b64decode(img['image'])
 				t.write(te)
 
-
-	return render_template('home.html', posts = status.POSTS, attributes = status.ATTRIBUTES_SET)
+	random.shuffle(status.ATTRIBUTES_SET)
+	return render_template('home.html', posts = status.POSTS, attributes = status.ATTRIBUTES_SET[:10])
 
 
 @app.route("/about")
@@ -125,10 +130,11 @@ def upload():
 					for attr in dir(myimage):
 						try:
 							value=myimage.get(attr)
+							print(type(value))
 							if value!=None or value!=null or (type(value) not in [float,int,str]):
 								payload['metadata'][attr]=myimage.get(attr)
 
-								if attr not in status.ATTRIBUTES_SET and attr[0] != "_" or attr in ['user_comment', "MakerNote"]:
+								if attr not in status.ATTRIBUTES_SET and (attr[0] != "_" and attr not in ['user_comment', "MakerNote"]) and str(type(value)) in ["<class 'float'>", "<class 'int'>", "float", "int"]:
 									status.ATTRIBUTES_SET.append(attr)
 
 						except:
@@ -141,7 +147,9 @@ def upload():
 def upload2():
 	if status.LOGIN_STATUS == False:
 		return redirect(url_for('offline'))
-	return render_template('upload.html', title = "Submit", attributes = status.ATTRIBUTES_SET)
+
+	random.shuffle(status.ATTRIBUTES_SET)
+	return render_template('upload.html', title = "Submit", attributes = status.ATTRIBUTES_SET[:10])
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
