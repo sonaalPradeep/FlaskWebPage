@@ -44,7 +44,6 @@ def home2():
 	else:
 		payload["metadata."+data["aname"]]={ops[data["relop"]]:data["cval"]}
 
-	payload["metadata."+data["aname"]]={ops[data["relop"]]:int(data["cval"])}
 	r=requests.post("http://localhost:5000/query_records",json=payload)
 	r=r.json()
 
