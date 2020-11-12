@@ -11,3 +11,20 @@
           </div>
       </article>
 {% endblock content %}
+
+{% block attributes %}
+
+{% if attributes|length == 0 %}
+<p class="text-muted">Please add images to view the attributes</p>  
+{% endif %}
+
+
+{% for attr in attributes %}
+<li class="list-group-item list-group-item-light" style="word-wrap: break-word;">{{attr}}</li>
+{% endfor %}
+
+{% if attributes|length != 0 %}
+<p class="text-muted"><br>Other attributes are available</p>  
+{% endif %}
+
+{% endblock attributes %}

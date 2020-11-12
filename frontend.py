@@ -13,7 +13,7 @@ import random
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'sonaalpathlaipradeep'
+app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 
 class WebStatus():
 	LOGIN_STATUS = None
@@ -32,7 +32,7 @@ def offline():
 def home():
 	if status.LOGIN_STATUS == True:
 		random.shuffle(status.ATTRIBUTES_SET)
-		return render_template('home.html', attributes = status.ATTRIBUTES_SET[:10])
+		return render_template('home.html', attributes = status.ATTRIBUTES_SET[:min(len(status.ATTRIBUTES_SET), 10)])
 	else:
 		return redirect(url_for('offline'))
 	
@@ -40,22 +40,73 @@ def home():
 @app.route("/home", methods=['POST'])
 def home2():
 	data=request.form
+	payload = dict(data.lists())
+	# print(payload)
+	num_of_constrs = -1
+
+	for key, value in payload.items():
+		if key == 'member':
+			num_of_constrs = int(value[0])
+			break
+
+	list_of_attrs = [None] * num_of_constrs
+	list_of_relops = [None] * num_of_constrs
+	list_of_constrs = [None] * num_of_constrs
+
+	for key, value in payload.items():
+		if key == 'member':
+			continue
+
+		if key[0] == 'a':
+			list_of_attrs[int(key.lstrip('attribute'))] = value[0]
+		elif key[0] == 'r':
+			list_of_relops[int(key.lstrip('relop'))] = value[0]
+		else:
+			list_of_constrs[int(key.lstrip('constraint'))] = value[0]
+
+	# print(list_of_attrs, list_of_constrs, list_of_relops, sep = "\n")
+
+
 	ops = {'==' : '$eq', '!=' : '$ne', '<' : '$lt', '>' : '$gt', '<=' : '$lte', '>=' : '$gte'}
+	list_of_payloads = []
 	payload={}
 
-	if data["relop"] == "HAS":
-		payload["metadata."+data["aname"]] = "/^{}*/i".format(data["cval"])
-	elif data["cval"].isdigit():
-		payload["metadata."+data["aname"]]={ops[data["relop"]]:int(data["cval"])}
-	elif "." in data["cval"]:
-		payload["metadata."+data["aname"]]={ops[data["relop"]]:float(data["cval"])}
-	else:
-		payload["metadata."+data["aname"]]={ops[data["relop"]]:data["cval"]}
+	for ind in range(num_of_constrs):
+		curr_attr = list_of_attrs[ind]
+		curr_relop = list_of_relops[ind]
+		curr_constr = list_of_constrs[ind]
+
+		try:
+			if curr_relop == "^":
+				list_of_payloads.append({"metadata."+ curr_attr : {"$regex":"^"+curr_constr, "$options":"i"}})
+				# payload["metadata."+data["aname"]] = {"$regex":"^"+data['cval'], "$options":"i"}
+			elif curr_relop == "$":
+				list_of_payloads.append({"metadata."+ curr_attr : {"$regex":curr_constr+"$", "$options":"i"}})
+				# payload["metadata."+data["aname"]] = {"$regex":"^"+data['cval'], "$options":"i"}
+			elif curr_constr.isdigit():
+				list_of_payloads.append({"metadata."+ curr_attr : {ops[curr_relop]:int(curr_constr)}})
+				# payload["metadata."+data["aname"]]={ops[data["relop"]]:int(data["cval"])}
+			elif "." in curr_constr:
+				list_of_payloads.append({"metadata."+ curr_attr : {ops[curr_relop]:float(curr_constr)}})
+				# payload["metadata."+data["aname"]]={ops[data["relop"]]:float(data["cval"])}
+			else:
+				list_of_payloads.append({"metadata."+ curr_attr : {ops[curr_relop]:curr_constr}})
+				# payload["metadata."+data["aname"]]={ops[data["relop"]]:data["cval"]}
+		except:
+			flash("Encountered some error while parsing query", "warning")
+
+	print(list_of_payloads)
+
+	for dict_pair in list_of_payloads:
+		key, value = list(dict_pair.keys())[0], list(dict_pair.values())[0]
+		payload[key] = value
 
 	print(payload)
+
 	r=requests.post("http://localhost:5000/query_records",json=payload)
 	r=r.json()
 
+	print(r)
 	status.POSTS = []
 	tmp_download_imgs = glob.glob('./tmp_uploads/*')
 	if tmp_download_imgs != []:
@@ -68,8 +119,8 @@ def home2():
 			os.remove(img_loc)
 
 	if r == {'error': 'data not found'}:
-		print(r)
-		flash("404: No pictures found", "warning")
+		#print(r)
+		flash("No pictures found", "warning")
 	else:
 		for ind, img in enumerate(r):    
 			tmp_post = {}
@@ -79,7 +130,7 @@ def home2():
 				if key[0] == "_" or len(str(value)) > 50 or key in ['user_comment', "MakerNote"]:
 					continue
 
-				new_meta[key] = value
+				new_meta[key] = value.lstrip().rstrip()
 
 			tmp_post["metadata"] = new_meta
 			tmp_post["title"] = img["name"]
@@ -94,7 +145,7 @@ def home2():
 				t.write(te)
 
 	random.shuffle(status.ATTRIBUTES_SET)
-	return render_template('home.html', posts = status.POSTS, attributes = status.ATTRIBUTES_SET[:10])
+	return render_template('home.html', posts = status.POSTS, attributes = status.ATTRIBUTES_SET[:min(len(status.ATTRIBUTES_SET), 10)])
 
 
 @app.route("/about")
@@ -114,8 +165,8 @@ def upload():
 	file.save("tmp_uploads/" + file.filename)
 	#print(list(file))
 	fname=file.filename.split('.')
-	if fname[-1]!="jpg":
-		flash("Incompatibe image format. Please use jpg", "warning")
+	if fname[-1].lower()!="jpg":
+		flash("Incompatibe image format. Please use JPG", "warning")
 	else:
 		payload['name']=file.filename
 		# print(file.filename)
@@ -153,7 +204,7 @@ def upload2():
 		return redirect(url_for('offline'))
 
 	random.shuffle(status.ATTRIBUTES_SET)
-	return render_template('upload.html', title = "Submit", attributes = status.ATTRIBUTES_SET[:10])
+	return render_template('upload.html', title = "Submit", attributes = status.ATTRIBUTES_SET[:min(len(status.ATTRIBUTES_SET), 10)])
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
@@ -163,7 +214,7 @@ def login():
             flash("Logged in Succesfully", 'success')
             status.GUEST_USRNAME = form.username.data
             status.LOGIN_STATUS = True
-            return redirect(url_for('home'))
+            return redirect(url_for('about'))
         else:
             flash("Login Unsuccesful for : {}".format(form.username.data), 'warning')
             return redirect(url_for('offline'))
@@ -171,4 +222,4 @@ def login():
     return render_template('login.html', title = "Login", form = form)
 
 if __name__ == "__main__":
-    app.run(host="localhost", port=8000, debug = True)
+    app.run(host="0.0.0.0", port=8000, debug = True)

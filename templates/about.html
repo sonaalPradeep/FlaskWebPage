@@ -1,13 +1,39 @@
 {% extends "layout.html" %}
 {% block content %}
-<h3>About Page</h3>
-<br>
+
 <article class="media content-section">
           <div class="media-body">
             <div class="article-metadata">
       <p style="font-style: italic;">Webpage made by <b>Varun Kumar Reddy Ramireddy</b> and <b>Sonaal Pathlai Pradeep</b> as part of the cloud computing evaluation.</p>
 
-      <p>Need to enter some gibberish</p>
+      <p>This page was developed using Python Flask with MongoDB as the database, hosted on Azure container instances.</p>
+          </div>
+        </article>
+<h3>Please Note:</h3>
+<br>
+<article class="media content-section">
+          <div class="media-body">
+            <div class="article-metadata">
+      <p>Webpage accepts only <b>JPG</b> files.</p>
+      <p>After a search query, perform a hard refresh incase the images shown are incorrect, i.e, not corresponding to the metadata.</p>
+      <p>Login using <i>guest</i> as the username and password.</p>
           </div>
         </article>
 {% endblock content %}
+
+{% block attributes %}
+
+{% if attributes|length == 0 %}
+<p class="text-muted">Please add images to view the attributes</p>  
+{% endif %}
+
+
+{% for attr in attributes %}
+<li class="list-group-item list-group-item-light" style="word-wrap: break-word;">{{attr}}</li>
+{% endfor %}
+
+{% if attributes|length != 0 %}
+<p class="text-muted"><br>Other attributes are available</p>  
+{% endif %}
+
+{% endblock attributes %}

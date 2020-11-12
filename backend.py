@@ -5,8 +5,8 @@ import datetime
 
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {
-    'db': 'test',
-    'host': 'localhost',
+    'db': 'images',
+    'host': 'mongodb://mongodb:27017/imagedb',
     'port': 27017
 }
 db = MongoEngine()
@@ -26,12 +26,11 @@ class User(db.Document):
 @app.route('/query_records', methods=['GET','POST'])
 def query_records():
     query = json.loads(request.data)
-    print(query)
+    #print(query)
     user = User.objects(__raw__=query)
     if not user:
         return jsonify({'error': 'data not found'})
     else:
-        print("returned obkect")
         return jsonify(user)
 
 @app.route('/create_record', methods=['PUT','POST','GET'])

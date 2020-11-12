@@ -1,27 +1,70 @@
 {% extends "layout.html" %}
 {% block search %}
+
+ <script type='text/javascript'>
+        function addFields(){
+            // Number of inputs to create
+            var number = document.getElementById("member").value;
+            // Container <div> where dynamic content will be placed
+            var container = document.getElementById("container");
+            // Clear previous contents of the container
+            while (container.hasChildNodes()) {
+                container.removeChild(container.lastChild);
+            }
+            for (i=0;i<number;i++){
+                // Append a node with a random text
+                container.appendChild(document.createTextNode("Attribute " + (i+1) + ": "));
+                container.appendChild(document.createElement("br"));
+                // Create an <input> element, set its type and name attributes
+                var input = document.createElement("input");
+                input.type = "text";
+                input.name = "attribute" + i;
+                input.style = "width:360px; padding: 0px"
+                container.appendChild(input);
+                // Append a line break 
+                container.appendChild(document.createElement("br"));
+
+                container.appendChild(document.createTextNode("Relop " + (i+1) + ": "));
+                container.appendChild(document.createElement("br"));
+                
+                var input = document.createElement("input");
+                input.type = "text";
+                input.name = "relop" + i;
+                input.style = "width:360px; padding: 0px"
+                container.appendChild(input);
+                // Append a line break 
+                container.appendChild(document.createElement("br"));
+
+                container.appendChild(document.createTextNode("Constraint " + (i+1) + ": "));
+                container.appendChild(document.createElement("br"));
+                var input = document.createElement("input");
+                input.type = "text";
+                input.name = "constraint" + i;
+                input.style = "width:360px; padding: 0px"
+                container.appendChild(input);
+                // Append a line break 
+                container.appendChild(document.createElement("br"));
+                container.appendChild(document.createElement("hr"));
+            }
+        }
+    </script>
+
+
         <h3>Search for Images</h3>
         <article class="media content-section">
           <div class="media-body">
             <div class="article-metadata">
       <form action="home" method = "POST">
-        <label for="aname">Attribute Name:</label>
-        <input type="text" id="aname" name="aname" value=""><br>
-        <label for="relop">Relational Operator:</label>
-          <select name="relop" id="relop">
-    <option value="==">==</option>
-    <option value="!=">!=</option>
-    <option value="<"><</option>
-    <option value=">">></option>
-    <option value="<="><=</option>
-    <option value=">=">>=</option>
-    <option value="HAS">HAS</option>
-  </select><br>
-          <label for="cval">Constraint Value:</label>
-        <input type="text" id="cval" name="cval" value=""><br><br>
-        <input type="submit" value="Submit"><br>
-      </form> 
-          </div>
+<label>Number of constraints: </label>
+            <input type="text" id="member" name="member" value="1"><br />
+    <a href="#" id="filldetails" onclick="addFields()" style="text-align: right;">Generate Forms</a>
+    <p class='text-muted' style="font-size: 15px">Operations Available : ==, !=, <, <=, >, >=, ^, $</p>
+    <div id="container"/></div>
+
+            <input type="submit" value="Submit"><br><br>
+      </form>
+
+
         </article>
 {% endblock search %}
 
