@@ -43,13 +43,16 @@ def home2():
 	ops = {'==' : '$eq', '!=' : '$ne', '<' : '$lt', '>' : '$gt', '<=' : '$lte', '>=' : '$gte'}
 	payload={}
 
-	if data["cval"].isdigit():
+	if data["relop"] == "HAS":
+		payload["metadata."+data["aname"]] = "/^{}*/i".format(data["cval"])
+	elif data["cval"].isdigit():
 		payload["metadata."+data["aname"]]={ops[data["relop"]]:int(data["cval"])}
 	elif "." in data["cval"]:
 		payload["metadata."+data["aname"]]={ops[data["relop"]]:float(data["cval"])}
 	else:
 		payload["metadata."+data["aname"]]={ops[data["relop"]]:data["cval"]}
 
+	print(payload)
 	r=requests.post("http://localhost:5000/query_records",json=payload)
 	r=r.json()
 
@@ -65,6 +68,7 @@ def home2():
 			os.remove(img_loc)
 
 	if r == {'error': 'data not found'}:
+		print(r)
 		flash("404: No pictures found", "warning")
 	else:
 		for ind, img in enumerate(r):    
@@ -130,7 +134,7 @@ def upload():
 					for attr in dir(myimage):
 						try:
 							value=myimage.get(attr)
-							print(type(value))
+							# print(type(value))
 							if value!=None or value!=null or (type(value) not in [float,int,str]):
 								payload['metadata'][attr]=myimage.get(attr)
 
