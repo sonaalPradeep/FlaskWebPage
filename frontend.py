@@ -41,7 +41,6 @@ def home():
 def home2():
 	data=request.form
 	payload = dict(data.lists())
-	# print(payload)
 	num_of_constrs = -1
 
 	for key, value in payload.items():
@@ -64,8 +63,6 @@ def home2():
 		else:
 			list_of_constrs[int(key.lstrip('constraint'))] = value[0]
 
-	# print(list_of_attrs, list_of_constrs, list_of_relops, sep = "\n")
-
 
 	ops = {'==' : '$eq', '!=' : '$ne', '<' : '$lt', '>' : '$gt', '<=' : '$lte', '>=' : '$gte'}
 	list_of_payloads = []
@@ -79,34 +76,26 @@ def home2():
 		try:
 			if curr_relop == "^":
 				list_of_payloads.append({"metadata."+ curr_attr : {"$regex":"^"+curr_constr, "$options":"i"}})
-				# payload["metadata."+data["aname"]] = {"$regex":"^"+data['cval'], "$options":"i"}
 			elif curr_relop == "$":
 				list_of_payloads.append({"metadata."+ curr_attr : {"$regex":curr_constr+"$", "$options":"i"}})
-				# payload["metadata."+data["aname"]] = {"$regex":"^"+data['cval'], "$options":"i"}
 			elif curr_constr.isdigit():
 				list_of_payloads.append({"metadata."+ curr_attr : {ops[curr_relop]:int(curr_constr)}})
-				# payload["metadata."+data["aname"]]={ops[data["relop"]]:int(data["cval"])}
 			elif "." in curr_constr:
 				list_of_payloads.append({"metadata."+ curr_attr : {ops[curr_relop]:float(curr_constr)}})
-				# payload["metadata."+data["aname"]]={ops[data["relop"]]:float(data["cval"])}
 			else:
 				list_of_payloads.append({"metadata."+ curr_attr : {ops[curr_relop]:curr_constr}})
-				# payload["metadata."+data["aname"]]={ops[data["relop"]]:data["cval"]}
 		except:
-			flash("Encountered some error while parsing query", "warning")
+			pass
 
-	print(list_of_payloads)
 
 	for dict_pair in list_of_payloads:
 		key, value = list(dict_pair.keys())[0], list(dict_pair.values())[0]
 		payload[key] = value
 
-	print(payload)
 
 	r=requests.post("http://localhost:5000/query_records",json=payload)
 	r=r.json()
 
-	print(r)
 	status.POSTS = []
 	tmp_download_imgs = glob.glob('./tmp_uploads/*')
 	if tmp_download_imgs != []:
@@ -119,7 +108,6 @@ def home2():
 			os.remove(img_loc)
 
 	if r == {'error': 'data not found'}:
-		#print(r)
 		flash("No pictures found", "warning")
 	else:
 		for ind, img in enumerate(r):    
@@ -129,8 +117,10 @@ def home2():
 			for key, value in img['metadata'].items():
 				if key[0] == "_" or len(str(value)) > 50 or key in ['user_comment', "MakerNote"]:
 					continue
-
-				new_meta[key] = value.lstrip().rstrip()
+				if type(value) == str:
+					new_meta[key] = value.strip()
+				else:
+					new_meta[key] = value
 
 			tmp_post["metadata"] = new_meta
 			tmp_post["title"] = img["name"]
@@ -144,6 +134,7 @@ def home2():
 				te=base64.b64decode(img['image'])
 				t.write(te)
 
+	print(status.POSTS)
 	random.shuffle(status.ATTRIBUTES_SET)
 	return render_template('home.html', posts = status.POSTS, attributes = status.ATTRIBUTES_SET[:min(len(status.ATTRIBUTES_SET), 10)])
 
@@ -163,17 +154,14 @@ def upload():
 	payload={}
 	file = request.files['file']
 	file.save("tmp_uploads/" + file.filename)
-	#print(list(file))
 	fname=file.filename.split('.')
 	if fname[-1].lower()!="jpg":
 		flash("Incompatibe image format. Please use JPG", "warning")
 	else:
 		payload['name']=file.filename
-		# print(file.filename)
 		if 'file' in request.files:
 			with open("tmp_uploads/" + file.filename,'rb') as imgfile:
 				image_enc=base64.b64encode(imgfile.read())
-				# print(str(image_enc)[2:-1])
 				imgfile.seek(0)
 
 				myimage=Image(imgfile)
@@ -185,9 +173,10 @@ def upload():
 					for attr in dir(myimage):
 						try:
 							value=myimage.get(attr)
-							# print(type(value))
 							if value!=None or value!=null or (type(value) not in [float,int,str]):
 								payload['metadata'][attr]=myimage.get(attr)
+								if type(payload['metadata'][attr])==str:
+									payload['metadata'][attr]=payload['metadata'][attr].strip()
 
 								if attr not in status.ATTRIBUTES_SET and (attr[0] != "_" and attr not in ['user_comment', "MakerNote"]) and str(type(value)) in ["<class 'float'>", "<class 'int'>", "float", "int"]:
 									status.ATTRIBUTES_SET.append(attr)
@@ -222,4 +211,4 @@ def login():
     return render_template('login.html', title = "Login", form = form)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug = True)
+    app.run(host="0.0.0.0", port=80, debug = False)

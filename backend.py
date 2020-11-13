@@ -26,7 +26,6 @@ class User(db.Document):
 @app.route('/query_records', methods=['GET','POST'])
 def query_records():
     query = json.loads(request.data)
-    #print(query)
     user = User.objects(__raw__=query)
     if not user:
         return jsonify({'error': 'data not found'})
@@ -44,4 +43,4 @@ def create_record():
     return jsonify(user.to_json())
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

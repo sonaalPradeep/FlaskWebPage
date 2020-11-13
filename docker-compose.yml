@@ -1,12 +1,12 @@
 version: '3'
 services:
-  webapp:
+  app:
     build: .
-    container_name: webapp
-    image: vitoregistry.azurecr.io/webapp
+    container_name: app
+    image: vitoregistry.azurecr.io/app
     restart: unless-stopped
     ports:
-      - '8000:8000'
+      - '80:80'
       - '5000:5000'
     links:
       - mongodb
