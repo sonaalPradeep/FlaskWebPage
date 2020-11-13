@@ -24,5 +24,5 @@ python3 backend.py
 ```
 
 ## Notes
-* The program supports extracting metadata from only <b>JPG</b>images.
+* The program supports extracting metadata from only <b>JPG</b> images.
 * There are instances when the image doesn't correspond to the correct metadata. When this happens, <b>hard reset the browser</b>.
